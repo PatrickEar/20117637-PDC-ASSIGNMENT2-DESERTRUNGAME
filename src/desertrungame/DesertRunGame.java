@@ -5,9 +5,6 @@ package desertrungame;
  * @author Patri
  */
 
-
-// Git Test
-
 import java.io.IOException;
 import java.util.Scanner;
 import java.util.regex.Matcher;
