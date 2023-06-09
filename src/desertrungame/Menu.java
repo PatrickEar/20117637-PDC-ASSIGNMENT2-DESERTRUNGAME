@@ -4,6 +4,8 @@ package desertrungame;
  *
  * @author Patri
  */
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -12,6 +14,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 public class Menu {
     
@@ -21,8 +36,11 @@ public class Menu {
     private Inventory inventory;
     private SaveLoad saveLoad;
     
+    private JFrame frame;
+    
     private Difficulty difficulty;
     private double currencyMultiplier;
+
 
 
     public Menu(Difficulty difficulty, Player player, Inventory inventory) {
@@ -37,175 +55,245 @@ public class Menu {
         this.currencyMultiplier = this.difficulty.getPriceMultiplier();
     }
     
-    // prompts the load game selction menu
+    // Prompts the load game selction menu
     public String loadGameMenu(Difficulty difficulty, Player player, Inventory inventory, Map map) throws IOException {
-        // searches for a saves folder
         File folder = new File("saves/");
         if (!folder.exists()) {
-            System.out.println("No saved files found.");
+            JOptionPane.showMessageDialog(null, "No saved files found.", "Load Game", JOptionPane.INFORMATION_MESSAGE);
             return null;
         }
-        
-        // loads files with the .txt extension
+
         File[] loadFiles = folder.listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 return name.endsWith(".txt");
             }
         });
-        
-        // if no files were found 
+
         if (loadFiles.length == 0) {
-            System.out.println("No saved files found.");
+            JOptionPane.showMessageDialog(null, "No saved files found.", "Load Game", JOptionPane.INFORMATION_MESSAGE);
             return null;
         }
-        
-        // prompts user to select a file to load
-        System.out.println("Choose a saved file to load:");
-        
-        // generates a dynamic list to choose a file from
-        for (int i = 0; i < loadFiles.length; i++) {
-            System.out.printf("%d - %s%n", i + 1, loadFiles[i].getName());
+
+        // Create a panel with search filter and selection options
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        JTextField searchField = new JTextField(20);
+        panel.add(new JLabel("Search:"));
+        panel.add(searchField);
+
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        JList<String> fileList = new JList<>(listModel);
+        fileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        JScrollPane scrollPane = new JScrollPane(fileList);
+        scrollPane.setPreferredSize(new Dimension(300, 200));
+        panel.add(scrollPane);
+
+        // Populate the file list with all available files
+        for (File file : loadFiles) {
+            listModel.addElement(file.getName());
         }
-        System.out.println((loadFiles.length + 1) + ". Return to menu");
-        
-        // when input is valid, load file / return to menu
-        int input = -1;
-        while (input < 1 || input > loadFiles.length) {
-            // handle invalid input
-            try {
-                input = Integer.parseInt(this.scanner.nextLine());
-                
-                if (input == ((loadFiles.length+1))) {
-                System.out.println("=========================");
-                System.out.println("Returning to menu...");
-                return null;
+
+        // Add a search filter listener
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                filterFiles();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                filterFiles();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                filterFiles();
+            }
+
+            private void filterFiles() {
+                String searchText = searchField.getText().trim().toLowerCase();
+                listModel.clear();
+
+                for (File file : loadFiles) {
+                    String fileName = file.getName().toLowerCase();
+                    if (fileName.contains(searchText)) {
+                        listModel.addElement(file.getName());
+                    }
                 }
-                
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input. Please enter a number.");
             }
-        }
-        
-        // prepares file to be returned/used
-        File loadFile = loadFiles[input - 1];
+        });
 
-        // load the game from the selected file
-        saveLoad.loadFromFile(difficulty, player, inventory, map, folder + "/" + loadFile.getName());
-        
-        // return the name of the file
-        return loadFile.getName();
+        // Show the selection menu dialog
+        int choice = JOptionPane.showOptionDialog(
+                null,
+                panel,
+                "Load Game",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                null,
+                null
+        );
+
+        if (choice == -1 || choice >= listModel.getSize()) {
+            JOptionPane.showMessageDialog(null, "Returning to menu...", "Load Game", JOptionPane.INFORMATION_MESSAGE);
+            return null;
+        } else {
+            File loadFile = loadFiles[choice];
+            saveLoad.loadFromFile(difficulty, player, inventory, map, folder + "/" + loadFile.getName());
+            return loadFile.getName();
+        }
     }
     
-    // generates a food market menu
-    public void foodMarketMenu() {
-        // generates options for the user to purchase from
-        List<Consumable> foodMarketShop = generateFoodMarketShop();
-        
-        System.out.println("=========================");
-        System.out.println("\"Welcome to the Food Market!\"");
-        System.out.println("You currently have " + this.player.getCurrency() + " coins!");
-        System.out.println("=========================");
-        
-        System.out.println("The vendor asks...");
-        
-        // creates a dynamic list that the user is able to purchase consumables from
-        while(true) {
-            System.out.println("=========================");
-            System.out.println("What would you like to buy?");
-            System.out.println("=========================");
-            
-            for (int i = 0; i < foodMarketShop.size(); i++) {
-                System.out.println((i+1) + ". " + foodMarketShop.get(i).getName() + " (" + foodMarketShop.get(i).getCost() + " coins)");
-            }
-            System.out.println((foodMarketShop.size() + 1) + ". Leave Food Market");
-            
-            int input = '\0';
-            
-            // handles invalid inputs
-            try {
-                input = this.scanner.nextInt();
-            }catch(Exception e){
-                System.out.println("Invalid number!");
-                this.scanner.nextLine(); // consumes the newline character fron nextInt() to prevent try catch loop from occuring
-                continue;
-            }
-            
-            // leaves food market and return to game menu
-            if (input == ((foodMarketShop.size()+1))) {
-                System.out.println("=========================");
-                System.out.println("Leaving Food Market...");
-                return;
-            } else if (input < 1 || input > foodMarketShop.size()) {
-                System.out.println("Invalid option!");
-                continue;
-            }
-            
-            Consumable option = foodMarketShop.get(input-1);
-            
-            // checks if player has enough coins to purchase and adds to inventory
-            if(this.player.getCurrency() >= option.getCost()){
-                this.inventory.addItem(option);
-                this.player.decreaseCurrency(option.getCost());
-                System.out.println("\"Thank you for purchasing my " + option.getName() + "!\"");
-                System.out.println("You now have " + this.player.getCurrency() + " coins!");
-                
-                foodMarketShop.remove(option);
+    public void endTurn(Player player, Map map) {
+        map.endTurn();
+
+        StringBuilder playerInfo = new StringBuilder();
+        playerInfo.append("Health: ").append(player.getHealth()).append("\n");
+        playerInfo.append("Hunger: ").append(player.getHunger()).append("\n");
+        playerInfo.append("Thirst: ").append(player.getThirst()).append("\n");
+        playerInfo.append("Currency: ").append(player.getCurrency()).append("\n");
+        playerInfo.append("Distance: ").append(map.getCurrentPosition()).append("\n");
+
+        JOptionPane.showMessageDialog(null, "Your turn has ended.\n\n" + playerInfo.toString(), "End Turn", JOptionPane.PLAIN_MESSAGE);
+    }
+    
+    public void isEvent(Map map) {
+        int randomChance = this.random.nextInt(100); // Generate a random number between 0-99
+
+        // Checks if user is able to scout area
+        if (!map.getHasScouted()) {
+            if (randomChance < (20 * map.getEventMultiplier())) { // 20% chance for FoodMarket event, opens menu
+                JOptionPane.showMessageDialog(null, map.getFoodMarket().getDescription(), "Event", JOptionPane.INFORMATION_MESSAGE);
+                foodMarketMenu();
+
+            } else if (randomChance >= (20 * map.getEventMultiplier()) && randomChance < (30 * map.getEventMultiplier())) { // 10% chance for Oasis event, opens menu
+                JOptionPane.showMessageDialog(null, map.getOasis().getDescription(), "Event", JOptionPane.INFORMATION_MESSAGE);
+                oasisMenu();
+
             } else {
-                System.out.println("\"You don't have enough coins to buy this!\"");
+                int randomCurrency = this.random.nextInt(1, 6); // Generate a random number between 1-5 for currency found
+                JOptionPane.showMessageDialog(null, map.getFindCurrency().getDescription(), "Event", JOptionPane.INFORMATION_MESSAGE);
+                // Add the found currency to the player's inventory
+                this.player.increaseCurrency(randomCurrency);
             }
-        }
-    }
-    
-    // oasis menu generator
-    public void OasisMenu() {
-        // generates a random list of three consumables the user can take for free
-        List<Consumable> OasisShop = generateOasisShop();
-        
-        System.out.println("=========================");
-        System.out.println("\"Welcome to the Oasis!\""); 
-        
-        // creates a dynamic list the user can choose from
-        while(true) {
-            System.out.println("=========================");
-            System.out.println("You find...");
-            System.out.println("=========================");
-            for (int i = 0; i < OasisShop.size(); i++) {
-                System.out.println((i+1) + ". " + OasisShop.get(i).getName());
-            }
-            System.out.println((OasisShop.size() + 1) + ". Leave Oasis");
-            
-            int input = '\0';
-            
-            // handles invalid input
-            try {
-                input = this.scanner.nextInt();
-            }catch(Exception e){
-                System.out.println("Invalid number!");
-                this.scanner.nextLine(); // consumes the newline character fron nextInt() to prevent try catch loop from occuring
-                continue;
-            }
-            
-            // leaves oasis and return to game menu
-            if (input == ((OasisShop.size()+1))) {
-                System.out.println("=========================");
-                System.out.println("Leaving Oasis...");
-                return;
-            } else if (input < 1 || input > OasisShop.size()) {
-                System.out.println("Invalid option!");
-                continue;
-            }
-            
-            Consumable option = OasisShop.get(input-1);
-            
-            // adds item to player inventory
-            this.inventory.addItem(option);
-            System.out.println("\"You store the " + option.getName() + " in your inventory!\"");
+            map.setHasScouted(true);
 
-            OasisShop.remove(option);
+        } else {
+            JOptionPane.showMessageDialog(null, "You have already scouted the area!", "Event", JOptionPane.INFORMATION_MESSAGE);
         }
     }
     
-    // generates a list of items for food market menu
+    // Generates a food market menu
+    public void foodMarketMenu() {
+        List<Consumable> foodMarketShop = generateFoodMarketShop();
+
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        for (Consumable item : foodMarketShop) {
+            listModel.addElement(item.getName() + " (" + item.getCost() + " coins)");
+        }
+
+        JList<String> itemList = new JList<>(listModel);
+        itemList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+
+        JScrollPane scrollPane = new JScrollPane(itemList);
+        scrollPane.setPreferredSize(new Dimension(300, 200));
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        JLabel currencyLabel = new JLabel("You currently have " + player.getCurrency() + " coins.");
+        panel.add(currencyLabel);
+
+        panel.add(new JLabel("<html><br>Welcome to the Food Market!<br></html>"));
+        panel.add(scrollPane);
+
+        JButton buyButton = new JButton("Buy");
+        buyButton.addActionListener(e -> {
+            int selectedIndex = itemList.getSelectedIndex();
+            if (selectedIndex >= 0 && selectedIndex < foodMarketShop.size()) {
+                Consumable selectedItem = foodMarketShop.get(selectedIndex);
+                if (player.getCurrency() >= selectedItem.getCost()) {
+                    inventory.addItem(selectedItem);
+                    player.decreaseCurrency(selectedItem.getCost());
+                    JOptionPane.showMessageDialog(null, "You purchased " + selectedItem.getName() + "!", "Purchase Successful", JOptionPane.INFORMATION_MESSAGE);
+                    foodMarketShop.remove(selectedIndex);
+                    listModel.removeElementAt(selectedIndex);
+                    itemList.clearSelection(); // Clear the selection
+                    currencyLabel.setText("You currently have " + player.getCurrency() + " coins."); // Update the currency label
+                } else {
+                    JOptionPane.showMessageDialog(null, "You don't have enough coins to buy this item.", "Not Enough Coins", JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        });
+        panel.add(buyButton);
+
+        JButton leaveButton = new JButton("Leave");
+        leaveButton.addActionListener(e -> {
+            JOptionPane.showMessageDialog(null, "You left the Food Market.", "Shop Closed", JOptionPane.INFORMATION_MESSAGE);
+            frame.dispose(); // Close the food market menu window
+        });
+        panel.add(leaveButton);
+
+        frame = new JFrame("Food Market");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.getContentPane().add(panel);
+        frame.pack();
+        frame.setVisible(true);
+    }
+    
+    // Oasis menu generator
+    public void oasisMenu() {
+        List<Consumable> oasisShop = generateOasisShop();
+
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        for (Consumable item : oasisShop) {
+            listModel.addElement(item.getName());
+        }
+
+        JList<String> itemList = new JList<>(listModel);
+        itemList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+
+        JScrollPane scrollPane = new JScrollPane(itemList);
+        scrollPane.setPreferredSize(new Dimension(300, 200));
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        panel.add(new JLabel("<html><br>Welcome to the Oasis!<br></html>"));
+        panel.add(scrollPane);
+
+        JButton buyButton = new JButton("Buy");
+        buyButton.addActionListener(e -> {
+            int selectedIndex = itemList.getSelectedIndex();
+            if (selectedIndex >= 0 && selectedIndex < oasisShop.size()) {
+                Consumable selectedItem = oasisShop.get(selectedIndex);
+                inventory.addItem(selectedItem);
+                JOptionPane.showMessageDialog(null, "You found a " + selectedItem.getName() + "!", "Searching Successful", JOptionPane.INFORMATION_MESSAGE);
+                oasisShop.remove(selectedIndex);
+                listModel.removeElementAt(selectedIndex);
+                itemList.clearSelection(); // Clear the selection
+            }
+        });
+        panel.add(buyButton);
+
+        JButton leaveButton = new JButton("Leave");
+        leaveButton.addActionListener(e -> {
+            JOptionPane.showMessageDialog(null, "You left the Oasis.", "Location Left", JOptionPane.INFORMATION_MESSAGE);
+            frame.dispose(); // Close the oasis menu window
+        });
+        panel.add(leaveButton);
+
+        frame = new JFrame("Oasis");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.getContentPane().add(panel);
+        frame.pack();
+        frame.setVisible(true);
+    }
+    
+    // Generates a list of items for food market menu
     private List<Consumable> generateFoodMarketShop() {
         List<Consumable> foodMarketShop = new ArrayList<>();
         
@@ -218,18 +306,18 @@ public class Menu {
         return foodMarketShop;
     }
     
-    // generates a list of items for oasis menu
+    // Generates a list of items for oasis menu
     private List<Consumable> generateOasisShop() {
         List<Consumable> oasisItems = new ArrayList<>();
 
-        // all items in oasis are free
+        // All items in oasis are free
         oasisItems.add(new CactusMelon(0));
         oasisItems.add(new Waternut());
         oasisItems.add(new Sandshroom());
         oasisItems.add(new DryFruit());
         oasisItems.add(new PalmSap());
         
-        // shuffles and selects three random items to add to list
+        // Shuffles and selects three random items to add to list
         Collections.shuffle(oasisItems, this.random);
         
         List<Consumable> randomOasisItems = oasisItems.subList(0, 3);
@@ -238,57 +326,85 @@ public class Menu {
         return OasisShop;
     }
     
-    // opens the player current inventory 
-    public void InventoryMenu() {
-        System.out.println("=========================");
-        System.out.println("You open your inventory!");
-        
-        // display stats of player
-        while(true) {
-            System.out.println("=========================");
-            System.out.println("Your Current Stats");
-            System.out.println("=========================");
-            System.out.println("Hunger: " + player.getHunger());
-            System.out.println("Thirst: " + player.getThirst());
-            System.out.println("Health: " + player.getHealth());
-            System.out.println("Coins: " + player.getCurrency());
-            System.out.println("=========================");
-            
-            // prompts the user to select from a dynamic list to use consumables
-            System.out.println("\nWhat would you like to use?");
-            System.out.println("=========================");
-            for (int i = 0; i < inventory.getItems().size(); i++) {
-                System.out.println((i+1) + ". " + inventory.getItems().get(i).getName());
-            }
-            System.out.println((inventory.getItems().size() + 1) + ". Leave Inventory");
-            
-            int input = '\0';
-            
-            // handles invalid input
-            try {
-                input = this.scanner.nextInt();
-            }catch(Exception e){
-                System.out.println("Invalid number!");
-                this.scanner.nextLine(); // consumes the newline character fron nextInt() to prevent try catch loop from occuring
-                continue;
-            }
-            
-            // exits inventory and return to game menu
-            if (input == ((inventory.getItems().size()+1))) {
-                System.out.println("=========================");
-                System.out.println("Packing Inventory...");
-                return;
-            } else if (input < 1 || input > inventory.getItems().size()) {
-                System.out.println("Invalid option!");
-                continue;
-            }
-            
-            // consume the selected item and change stats accordingly
-            System.out.println("You use the " + inventory.getItems().get(input-1).getName() + " in your inventory!");
-            
-            System.out.println(inventory.getItems().get(input-1).getAction());
+    // Opens the player current inventory 
+    public void InventoryMenu(Inventory inventory, JList<String> inventoryList, Map map, Player player) {
+        boolean consumedItem = false;
 
-            inventory.consumeItem(input-1);
-        }
+        do {
+            DefaultListModel<String> inventoryListModel = new DefaultListModel<>();
+
+            // Populate the inventory list model with item names
+            for (Consumable item : inventory.getItems()) {
+                inventoryListModel.addElement(item.getName());
+            }
+
+            // Set the inventory list model to the JList
+            inventoryList.setModel(inventoryListModel);
+
+            // Create a StringBuilder to store additional player information
+            StringBuilder playerInfo = new StringBuilder();
+            playerInfo.append("Hunger: ").append(player.getHunger()).append("\n");
+            playerInfo.append("Thirst: ").append(player.getThirst()).append("\n");
+            playerInfo.append("Currency: ").append(player.getCurrency()).append("\n");
+            playerInfo.append("Distance: ").append(map.getCurrentPosition());
+
+            // Check if there are no items in the inventory
+            if (inventoryListModel.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "You have no more items!\n\n" + playerInfo, "Inventory", JOptionPane.PLAIN_MESSAGE);
+                break;
+            }
+
+            // Create a JPanel to hold the inventory list and player information
+            JPanel panel = new JPanel(new BorderLayout());
+
+            // Create a JLabel for player information and add it to the panel at the top
+            JLabel playerInfoLabel = new JLabel("<html><pre>" + playerInfo.toString() + "</pre></html>");
+            panel.add(playerInfoLabel, BorderLayout.NORTH);
+
+            // Add the JScrollPane with inventory list to the center of the panel
+            panel.add(new JScrollPane(inventoryList), BorderLayout.CENTER);
+
+            // Show the inventory menu
+            int option = JOptionPane.showOptionDialog(
+                    null,
+                    panel,
+                    "Inventory",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    null,
+                    null
+            );
+
+            // Check if an item is selected
+            if (option == JOptionPane.OK_OPTION && inventoryList.getSelectedIndex() != -1) {
+                // Get the selected item index
+                int selectedIndex = inventoryList.getSelectedIndex();
+
+                // Get the selected item
+                Consumable selectedItem = inventory.getItems().get(selectedIndex);
+
+                // Ask the user if they want to consume the item
+                int confirmOption = JOptionPane.showConfirmDialog(
+                        null,
+                        "Consume item: " + selectedItem.getName() + "?",
+                        "Consume Item",
+                        JOptionPane.YES_NO_OPTION
+                );
+
+                if (confirmOption == JOptionPane.YES_OPTION) {
+                    // Consume the item
+                    inventory.consumeItem(selectedIndex);
+                    consumedItem = true;
+                    JOptionPane.showMessageDialog(null, selectedItem.getAction(), "Item Consumed", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    consumedItem = false; // Item not consumed, reopen the inventory menu
+                }
+            } else {
+                consumedItem = false; // Item not selected or cancel button clicked, reopen the inventory menu
+            }
+        } while (consumedItem);
     }
 }
+
+

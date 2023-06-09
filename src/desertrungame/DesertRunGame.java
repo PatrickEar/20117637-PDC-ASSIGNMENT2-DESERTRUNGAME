@@ -5,211 +5,246 @@ package desertrungame;
  * @author Patri
  */
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
 
-public class DesertRunGame {
+public class DesertRunGame extends JFrame implements ActionListener {
+    private JLabel statusLabel;
+    private JButton newGameButton;
+    private JButton loadGameButton;
+    private JButton creditsButton;
+    private JButton quitButton;
+    private JTextField fileNameField;
+    private JButton startButton;
+    private JComboBox<String> difficultyComboBox;
+    private JButton walkButton;
+    private JButton scoutButton;
+    private JButton inventoryButton;
+    private JList<String> inventoryList;
+    private DefaultListModel<String> inventoryListModel;
+    private JButton saveAndQuitButton;
     
-    public static void main(String[] args) throws IOException {
-        Scanner scanner = new Scanner(System.in);
-        SaveLoad saveLoad = new SaveLoad();
+    private Scanner scanner = new Scanner(System.in);
+    private SaveLoad saveLoad = new SaveLoad();
+    private Difficulty difficulty;
+    private Player player;
+    private Inventory inventory;
+    private Map map;
+    private Menu menu;
+    private boolean gameLoop;
+    private String saveFileName;
+    
+    public DesertRunGame() {
+        // Initialize game classes
+        difficulty = Difficulty.EASY;
+        player = new Player();
+        inventory = new Inventory(player);
+        map = new Map(difficulty, player, inventory);
+        menu = new Menu(difficulty, player, inventory);
+        gameLoop = false;
+        saveFileName = "";
         
-        // main menu loop
-        while(true) {
-            // initialise game classes
-            Difficulty difficulty = Difficulty.EASY;
-            Player player = new Player();
-            Inventory inventory = new Inventory(player);
-            Map map = new Map(difficulty, player, inventory);
-            Menu menu = new Menu(difficulty, player, inventory);
+        // Set up the main menu GUI
+        setTitle("Desert Run");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new FlowLayout());
+        
+        statusLabel = new JLabel("Welcome to Desert Run!");
+        add(statusLabel);
+        
+        newGameButton = new JButton("New Game");
+        newGameButton.addActionListener(this);
+        add(newGameButton);
+        
+        loadGameButton = new JButton("Load Game");
+        loadGameButton.addActionListener(this);
+        add(loadGameButton);
+        
+        creditsButton = new JButton("Credits");
+        creditsButton.addActionListener(this);
+        add(creditsButton);
+        
+        quitButton = new JButton("Quit Game");
+        quitButton.addActionListener(this);
+        add(quitButton);
+        
+        pack();
+        setVisible(true);
+    }
+    
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new DesertRunGame();
+        });
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String actionCommand = e.getActionCommand();
+        
+        if (actionCommand.equals("New Game")) {
+            // Show the new game setup GUI
+            getContentPane().removeAll();
+            setTitle("Desert Run - New Game");
             
-            // for game loop
-            boolean gameLoop = false;
+            JLabel fileNameLabel = new JLabel("Enter file name:");
+            add(fileNameLabel);
             
-            // holds the current save file
-            String saveFileName = "";
-               
-            // main menu
-            System.out.println("Welcome to Desert Run!");
-            System.out.println("=========================");
-            System.out.println("1 - New Game");
-            System.out.println("2 - Load Game");
-            System.out.println("3 - Credits");
-            System.out.println("4 - Quit Game");
-
-            String input = scanner.nextLine();
-            System.out.println();
-
-            // inputs
-            switch (input) {
-                // prompts an input for a file name and repeats until valid input
-                case "1":
-                    Pattern pattern = Pattern.compile("[a-zA-Z0-9_-]+"); // Only allow letters, numbers, underscore, and hyphen
-                    Matcher matcher;
-                    System.out.println("=========================");
-                            
-                    do {
-                        System.out.println("Enter file name:");
-                        saveFileName = scanner.nextLine();
-                        matcher = pattern.matcher(saveFileName);
-                    } while (!matcher.matches());
-                    
-                    // adds extension to file
-                    saveFileName += ".txt";
-                    System.out.println();
-                    
-                    // difficulty select loop
-                    boolean difficultyLoop = true;
-                    difficulty = null;
-                    
-                    // difficulty loop 
-                    while(difficultyLoop){
-                        // difficulty select menu
-                        System.out.println("Choose a difficulty level:");
-                        System.out.println("=========================");
-                        System.out.println("1 - Easy");
-                        System.out.println("2 - Normal");
-                        System.out.println("3 - Hard");
-                        
-                        // difficulty adjusts multipliers for event chance,
-                        // price multiplier and spaces to win the game
-                        String difficultyChoice = scanner.nextLine();
-                        switch (difficultyChoice) {
-                            case "1":
-                                difficulty = Difficulty.EASY;
-                                difficultyLoop = false;
-                                break;
-                            case "2":
-                                difficulty = Difficulty.NORMAL;
-                                difficultyLoop = false;
-                                break;
-                            case "3":
-                                difficulty = Difficulty.HARD;
-                                difficultyLoop = false;
-                                break;
-                            default:
-                                System.out.println("Invalid input");
-                        }
-                    }
-                    
-                    System.out.println("\n=========================");
-                    System.out.println("You chose " + difficulty + " difficulty.");
-                    
-                    // begin game loop
-                    gameLoop = true;
-                    break;
-
-                case "2":
-                    // prompts user to select a file to load (if able)
-                    System.out.println("=========================");
-                    saveFileName = menu.loadGameMenu(difficulty, player, inventory, map);
-                    // if a file is not returned do not start game loop
-                    if (saveFileName != null) {
-                        gameLoop = true;
-                    }
-                    break;
-                case "3":
-                    // credits for the game creation
-                    System.out.println("=========================");
-                    System.out.println("By Patrick Ear 20117637");
-                    System.out.println("=========================");
-                    break;
-                case "4":
-                    // exits the game/application
-                    System.out.println("Exiting game...");
-
-                    System.exit(0);
-                default:
-                    System.out.println("Invalid input.");
+            fileNameField = new JTextField(20);
+            add(fileNameField);
+            
+            JButton startButton = new JButton("Start Game");
+            startButton.addActionListener(this);
+            add(startButton);
+            
+            JLabel difficultyLabel = new JLabel("Choose a difficulty level:");
+            add(difficultyLabel);
+            
+            difficultyComboBox = new JComboBox<>(new String[]{"Easy", "Normal", "Hard"});
+            add(difficultyComboBox);
+            
+            pack();
+            revalidate();
+            repaint();
+        } else if (actionCommand.equals("Start Game")) {
+            // Retrieve the user inputs from the GUI
+            saveFileName = fileNameField.getText();
+            String difficultyChoice = (String) difficultyComboBox.getSelectedItem();
+            
+            // Validate the file name
+            Pattern pattern = Pattern.compile("[a-zA-Z0-9_-]+");
+            Matcher matcher = pattern.matcher(saveFileName);
+            
+            if (matcher.matches()) {
+                // Add the file extension
+                saveFileName += ".txt";
+                
+                // Set the difficulty based on user choice
+                switch (difficultyChoice) {
+                    case "Easy" -> difficulty = Difficulty.EASY;
+                    case "Normal" -> difficulty = Difficulty.NORMAL;
+                    case "Hard" -> difficulty = Difficulty.HARD;
+                }
+                
+                // Start the game
+                startGame();
+            } else {
+                JOptionPane.showMessageDialog(this, "Invalid file name. Please enter alphanumeric characters, underscores, or hyphens only.");
             }
-
-            // Game loop
-            while (gameLoop && !map.isWin()) {
-                // display status
-                System.out.println("=========================");
-                System.out.println("Your current position is " + map.getCurrentPosition());
-                // displays if user is able to scout area
-                if (map.getHasScouted()) {
-                    System.out.println("You have scouted the area!");
-                } else {
-                    System.out.println("The area has not been scouted yet!");
-                }
-
-                // game menu
-                System.out.println("=========================");
-                System.out.println("Choose an action:");
-                System.out.println("=========================");
-                System.out.println("1 - Walk (End Turn)");
-                System.out.println("2 - Scout (Once per turn)");
-                System.out.println("3 - Inventory");
-                System.out.println("4 - Save and Quit to Menu");
-
-                input = scanner.nextLine();
-                System.out.println();
-
-                // inputs
-                switch (input) {
-                    case "1":
-                        // ends users turn
-                        map.endTurn();
-                        break;
-                    case "2":
-                        // scouts for a randomized event to occur
-                        map.isEvent();
-                        break;
-                    case "3":
-                        // opens the inventory menu
-                        menu.InventoryMenu();
-                        break;
-                    case "4":
-                        // saves the current stats of the game and returns to main menu
-                        System.out.println("=========================");
-                        System.out.println("Saving file as " + saveFileName + " and Returning to menu...");
-                        System.out.println("=========================");
-                        saveLoad.saveToFile(difficulty, player, inventory, map, saveFileName);
-                        gameLoop = false;
-                        break;
-                    default:
-                        System.out.println("Invalid input.");
-                }
-
-                // check if player died, deletes file if true
-                if (player.isDead()) {
-                    saveLoad.deleteFile(saveFileName);
-                    System.out.println("=========================");
-                    System.out.println("You died! Game over.");
-                    System.out.println("Deleting save file...");
-                    System.out.println("=========================");
-                    System.out.println("Final position: " + map.getCurrentPosition());
-                    System.out.println("Final hunger: " + player.getHunger());
-                    System.out.println("Final thirst: " + player.getThirst());
-                    System.out.println("Final Currency: " + player.getCurrency());
-                    System.out.println("=========================");
-                    System.out.println("Input anything to return to menu");
-                    scanner.nextLine();
-                    System.out.println("=========================");
-                    gameLoop = false;
-                }
-                // check if player has won, deletes file if true
-                if (map.isWin()) {
-                    saveLoad.deleteFile(saveFileName);
-                    System.out.println("=========================");
-                    System.out.println("Congratulations, you made it to the finish!");
-                    System.out.println("Deleting save file...");
-                    System.out.println("=========================");
-                    System.out.println("Final position: " + map.getCurrentPosition());
-                    System.out.println("Final hunger: " + player.getHunger());
-                    System.out.println("Final thirst: " + player.getThirst());
-                    System.out.println("Fincal Currency: " + player.getCurrency());
-                    System.out.println("Thanks for playing!");
-                    System.out.println("Input anything to return to menu");
-                    scanner.nextLine();
-                    System.out.println("=========================");
-                    gameLoop = false;
-                }
+        } else if (actionCommand.equals("Load Game")) {
+            try {
+                // Show the load game GUI
+                saveFileName = menu.loadGameMenu(difficulty, player, inventory, map);
+            } catch (IOException ex) {
+                Logger.getLogger(DesertRunGame.class.getName()).log(Level.SEVERE, null, ex);
             }
-        } 
+            
+            // If a file is not returned, do not start the game loop
+            if (saveFileName != null) {
+                startGame();
+            }
+        } else if (actionCommand.equals("Credits")) {
+            // Show the credits
+            JOptionPane.showMessageDialog(this, "By Patrick Ear 20117637");
+        } else if (actionCommand.equals("Quit Game")) {
+            // Exit the game/application
+            System.exit(0);
+        } else if (actionCommand.equals("Walk")) {
+            // End the user's turn
+            menu.endTurn(player, map);
+        } else if (actionCommand.equals("Scout")) {
+            // Scout for a randomized event to occur
+            menu.isEvent(map);
+        } else if (actionCommand.equals("Inventory")) {
+            // Open the inventory menu     
+            menu.InventoryMenu(inventory, inventoryList, map, player);
+        } else if (actionCommand.equals("Save and Quit")) {
+            try {
+                // Save the current stats of the game and return to the main menu
+                saveLoad.saveToFile(difficulty, player, inventory, map, saveFileName);
+            } catch (IOException ex) {
+                Logger.getLogger(DesertRunGame.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            gameLoop = false;
+            
+            // Show the main menu GUI
+            getContentPane().removeAll();
+            setTitle("Desert Run");
+            add(statusLabel);
+            add(newGameButton);
+            add(loadGameButton);
+            add(creditsButton);
+            add(quitButton);
+            pack();
+            revalidate();
+            repaint();
+        }
+        
+        if (player.isDead()) {
+            saveLoad.deleteFile(saveFileName);
+            JOptionPane.showMessageDialog(this, "You died! Game over.\nDeleting save file...");
+            displayFinalStats();
+            gameLoop = false;
+        }
+        
+        if (map.isWin()) {
+            saveLoad.deleteFile(saveFileName);
+            JOptionPane.showMessageDialog(this, "Congratulations, you made it to the finish!\nDeleting save file...\nThanks for playing!");
+            displayFinalStats();
+            gameLoop = false;
+        }
+    }
+    
+    private void startGame() {
+        // Set up the game loop
+        gameLoop = true;
+        
+        // Show the game GUI
+        getContentPane().removeAll();
+        setTitle("Desert Run - Game");
+        
+        walkButton = new JButton("Walk");
+        walkButton.addActionListener(this);
+        add(walkButton);
+        
+        scoutButton = new JButton("Scout");
+        scoutButton.addActionListener(this);
+        add(scoutButton);
+        
+        inventoryButton = new JButton("Inventory");
+        inventoryButton.addActionListener(this);
+        add(inventoryButton);
+        
+        inventoryListModel = new DefaultListModel<>();
+        inventoryList = new JList<>(inventoryListModel);
+        add(inventoryList);
+        
+        saveAndQuitButton = new JButton("Save and Quit");
+        saveAndQuitButton.addActionListener(this);
+        add(saveAndQuitButton);
+        
+        pack();
+        revalidate();
+        repaint();
+    }
+    
+    private void displayFinalStats() {
+        JOptionPane.showMessageDialog(this,
+                "Final position: " + map.getCurrentPosition() +
+                "\nFinal hunger: " + player.getHunger() +
+                "\nFinal thirst: " + player.getThirst() +
+                "\nFinal Currency: " + player.getCurrency());
     }
 }

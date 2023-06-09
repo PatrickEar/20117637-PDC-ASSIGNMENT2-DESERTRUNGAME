@@ -10,18 +10,18 @@ public class Map {
 
     private static final int STARTING_POSITION = 0; // the player's starting position
     
-    private Player player; // the player
-    private Menu menu; // the menu
-    private boolean hasScouted; // checks if player has used the scout option
+    private Player player; // The player
+    private Menu menu; // The menu
+    private boolean hasScouted; // Checks if player has used the scout option
     
-    private double eventMultiplier; // adjusts the chances for events based on difficulty
-    private int requiredPosition; // the required position to win based on difficulty
+    private double eventMultiplier; // Adjusts the chances for events based on difficulty
+    private int requiredPosition; // The required position to win based on difficulty
     
-    private int currentPosition; // the player's current position
+    private int currentPosition; // The player's current position
 
-    private Random random; // a random number generator
+    private Random random; // A random number generator
     
-    // events for scouting option
+    // Events for scouting option
     private Event oasis;
     private Event foodMarket; 
     private Event findCurrency;
@@ -43,62 +43,25 @@ public class Map {
         this.eventMultiplier = difficulty.getEventMultiplier();
     }
 
-    // moves player in game
+    // Moves player in game
     public void move() {
         int spacesMoved = this.random.nextInt(1,5); // move 1-4 spaces
         this.currentPosition += spacesMoved; 
-        System.out.println("You travel " + spacesMoved +" spaces");
     }
     
-    // checks if player has won
+    // Checks if player has won
     public boolean isWin() {
         return this.currentPosition >= this.requiredPosition;
-    } 
-    
-    // generates an random event from the events a player can encounter
-    public void isEvent() {
-        int randomChance = this.random.nextInt(100); // generate a random number between 0-99
-        
-        // checks if user is able to scout area
-        if(!this.hasScouted) {
-            if (randomChance < (20 * this.eventMultiplier)) { // 20% chance for FoodMarket event, opens menu
-                System.out.println("=========================");
-                System.out.println(this.foodMarket.getDescription());
-                this.menu.foodMarketMenu();
-
-            } else if (randomChance >= (20 * this.eventMultiplier) && randomChance < (30 * this.eventMultiplier)) { // 10% chance for Oasis event, opens menu
-                System.out.println("=========================");
-                System.out.println(this.oasis.getDescription());
-                this.menu.OasisMenu();
-
-            } else {
-                int randomCurrency = this.random.nextInt(1,6); // generate a random number between 1-5 for currency found
-                System.out.println("=========================");
-                System.out.println(this.findCurrency.getDescription());
-                // add the found currency to the player's inventory
-                this.player.increaseCurrency(randomCurrency);
-
-            }
-            this.hasScouted = true;
-                    
-        } else {
-            System.out.println("=========================");
-            System.out.println("You have already scouted the area!");
-            System.out.println("=========================");
-        }
     }
     
-    // ends turn 
+    // Ends turn 
     public void endTurn(){
-        System.out.println("=========================");
-        System.out.println("END TURN");
-        System.out.println("=========================");
         move();
         this.hasScouted = false;
         player.endTurn();
     }
     
-    // getter and setters
+    // Getter and Setters
     public int getCurrentPosition() {
         return this.currentPosition;
     }
@@ -114,5 +77,38 @@ public class Map {
     public void setHasScouted(boolean hasScouted){
         this.hasScouted = hasScouted;
     }
+
+    public double getEventMultiplier() {
+        return eventMultiplier;
+    }
+
+    public void setEventMultiplier(double eventMultiplier) {
+        this.eventMultiplier = eventMultiplier;
+    }
+
+    public Event getOasis() {
+        return oasis;
+    }
+
+    public void setOasis(Event oasis) {
+        this.oasis = oasis;
+    }
+
+    public Event getFoodMarket() {
+        return foodMarket;
+    }
+
+    public void setFoodMarket(Event foodMarket) {
+        this.foodMarket = foodMarket;
+    }
+
+    public Event getFindCurrency() {
+        return findCurrency;
+    }
+
+    public void setFindCurrency(Event findCurrency) {
+        this.findCurrency = findCurrency;
+    }
+    
     
 }
