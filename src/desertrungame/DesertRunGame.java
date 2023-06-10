@@ -133,9 +133,17 @@ public class DesertRunGame extends JFrame implements ActionListener {
                 
                 // Set the difficulty based on user choice
                 switch (difficultyChoice) {
-                    case "Easy" -> difficulty = Difficulty.EASY;
-                    case "Normal" -> difficulty = Difficulty.NORMAL;
-                    case "Hard" -> difficulty = Difficulty.HARD;
+                    case "Easy":
+                        difficulty = Difficulty.EASY;
+                        break;
+                    case "Normal":
+                        difficulty = Difficulty.NORMAL;
+                        break;
+                    case "Hard":
+                        difficulty = Difficulty.HARD;
+                        break;
+                    default:
+                        break;
                 }
                 
                 // Start the game
@@ -179,32 +187,29 @@ public class DesertRunGame extends JFrame implements ActionListener {
             }
             gameLoop = false;
             
-            // Show the main menu GUI
-            getContentPane().removeAll();
-            setTitle("Desert Run");
-            add(statusLabel);
-            add(newGameButton);
-            add(loadGameButton);
-            add(creditsButton);
-            add(quitButton);
-            pack();
-            revalidate();
-            repaint();
+            displayMainMenu();
         }
         
-        if (player.isDead()) {
+        if (player.isDead() && gameLoop) {
             saveLoad.deleteFile(saveFileName);
             JOptionPane.showMessageDialog(this, "You died! Game over.\nDeleting save file...");
             displayFinalStats();
+            player = new Player();
             gameLoop = false;
+            
+            displayMainMenu();
         }
         
-        if (map.isWin()) {
+        if (map.isWin() && gameLoop) {
             saveLoad.deleteFile(saveFileName);
             JOptionPane.showMessageDialog(this, "Congratulations, you made it to the finish!\nDeleting save file...\nThanks for playing!");
             displayFinalStats();
             gameLoop = false;
+            map = new Map(difficulty, player, inventory);;
+            
+            displayMainMenu();
         }
+        
     }
     
     private void startGame() {
@@ -246,5 +251,203 @@ public class DesertRunGame extends JFrame implements ActionListener {
                 "\nFinal hunger: " + player.getHunger() +
                 "\nFinal thirst: " + player.getThirst() +
                 "\nFinal Currency: " + player.getCurrency());
+    }
+
+    // Show the main menu GUI
+    private void displayMainMenu() {
+            getContentPane().removeAll();
+            setTitle("Desert Run");
+            add(statusLabel);
+            add(newGameButton);
+            add(loadGameButton);
+            add(creditsButton);
+            add(quitButton);
+            pack();
+            revalidate();
+            repaint();
+    }
+
+    public JLabel getStatusLabel() {
+        return statusLabel;
+    }
+
+    public void setStatusLabel(JLabel statusLabel) {
+        this.statusLabel = statusLabel;
+    }
+
+    public JButton getNewGameButton() {
+        return newGameButton;
+    }
+
+    public void setNewGameButton(JButton newGameButton) {
+        this.newGameButton = newGameButton;
+    }
+
+    public JButton getLoadGameButton() {
+        return loadGameButton;
+    }
+
+    public void setLoadGameButton(JButton loadGameButton) {
+        this.loadGameButton = loadGameButton;
+    }
+
+    public JButton getCreditsButton() {
+        return creditsButton;
+    }
+
+    public void setCreditsButton(JButton creditsButton) {
+        this.creditsButton = creditsButton;
+    }
+
+    public JButton getQuitButton() {
+        return quitButton;
+    }
+
+    public void setQuitButton(JButton quitButton) {
+        this.quitButton = quitButton;
+    }
+
+    public JTextField getFileNameField() {
+        return fileNameField;
+    }
+
+    public void setFileNameField(JTextField fileNameField) {
+        this.fileNameField = fileNameField;
+    }
+
+    public JButton getStartButton() {
+        return startButton;
+    }
+
+    public void setStartButton(JButton startButton) {
+        this.startButton = startButton;
+    }
+
+    public JComboBox<String> getDifficultyComboBox() {
+        return difficultyComboBox;
+    }
+
+    public void setDifficultyComboBox(JComboBox<String> difficultyComboBox) {
+        this.difficultyComboBox = difficultyComboBox;
+    }
+
+    public JButton getWalkButton() {
+        return walkButton;
+    }
+
+    public void setWalkButton(JButton walkButton) {
+        this.walkButton = walkButton;
+    }
+
+    public JButton getScoutButton() {
+        return scoutButton;
+    }
+
+    public void setScoutButton(JButton scoutButton) {
+        this.scoutButton = scoutButton;
+    }
+
+    public JButton getInventoryButton() {
+        return inventoryButton;
+    }
+
+    public void setInventoryButton(JButton inventoryButton) {
+        this.inventoryButton = inventoryButton;
+    }
+
+    public JList<String> getInventoryList() {
+        return inventoryList;
+    }
+
+    public void setInventoryList(JList<String> inventoryList) {
+        this.inventoryList = inventoryList;
+    }
+
+    public DefaultListModel<String> getInventoryListModel() {
+        return inventoryListModel;
+    }
+
+    public void setInventoryListModel(DefaultListModel<String> inventoryListModel) {
+        this.inventoryListModel = inventoryListModel;
+    }
+
+    public JButton getSaveAndQuitButton() {
+        return saveAndQuitButton;
+    }
+
+    public void setSaveAndQuitButton(JButton saveAndQuitButton) {
+        this.saveAndQuitButton = saveAndQuitButton;
+    }
+
+    public Scanner getScanner() {
+        return scanner;
+    }
+
+    public void setScanner(Scanner scanner) {
+        this.scanner = scanner;
+    }
+
+    public SaveLoad getSaveLoad() {
+        return saveLoad;
+    }
+
+    public void setSaveLoad(SaveLoad saveLoad) {
+        this.saveLoad = saveLoad;
+    }
+
+    public Difficulty getDifficulty() {
+        return difficulty;
+    }
+
+    public void setDifficulty(Difficulty difficulty) {
+        this.difficulty = difficulty;
+    }
+
+    public Player getPlayer() {
+        return player;
+    }
+
+    public void setPlayer(Player player) {
+        this.player = player;
+    }
+
+    public Inventory getInventory() {
+        return inventory;
+    }
+
+    public void setInventory(Inventory inventory) {
+        this.inventory = inventory;
+    }
+
+    public Map getMap() {
+        return map;
+    }
+
+    public void setMap(Map map) {
+        this.map = map;
+    }
+
+    public desertrungame.Menu getMenu() {
+        return menu;
+    }
+
+    public void setMenu(desertrungame.Menu menu) {
+        this.menu = menu;
+    }
+
+    public boolean isGameLoop() {
+        return gameLoop;
+    }
+
+    public void setGameLoop(boolean gameLoop) {
+        this.gameLoop = gameLoop;
+    }
+
+    public String getSaveFileName() {
+        return saveFileName;
+    }
+
+    public void setSaveFileName(String saveFileName) {
+        this.saveFileName = saveFileName;
     }
 }

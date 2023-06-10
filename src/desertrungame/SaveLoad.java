@@ -146,4 +146,9 @@ public class SaveLoad {
         File saveFile = new File("saves/" + fileName);
         saveFile.delete();
     }
+
+    public boolean fileExists(String fileName) {
+        File file = new File(fileName);
+        return file.exists();
+    }
 }

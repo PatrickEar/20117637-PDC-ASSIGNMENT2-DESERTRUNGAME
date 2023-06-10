@@ -69,6 +69,14 @@ public class Map {
     public void setCurrentPosition(int currentPosition) {
         this.currentPosition = currentPosition;
     }
+
+    public int getRequiredPosition() {
+        return requiredPosition;
+    }
+
+    public void setRequiredPosition(int requiredPosition) {
+        this.requiredPosition = requiredPosition;
+    }
     
     public boolean getHasScouted(){
         return this.hasScouted;
@@ -109,6 +117,12 @@ public class Map {
     public void setFindCurrency(Event findCurrency) {
         this.findCurrency = findCurrency;
     }
-    
-    
+
+    public Player getPlayer() {
+        return player;
+    }
+
+    public void setPlayer(Player player) {
+        this.player = player;
+    }
 }

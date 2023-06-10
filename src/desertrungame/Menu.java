@@ -6,6 +6,9 @@ package desertrungame;
  */
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -14,9 +17,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -125,26 +131,46 @@ public class Menu {
             }
         });
 
-        // Show the selection menu dialog
-        int choice = JOptionPane.showOptionDialog(
-                null,
-                panel,
-                "Load Game",
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.PLAIN_MESSAGE,
-                null,
-                null,
-                null
-        );
+        // Create a dialog to show the selection menu
+        JDialog dialog = new JDialog((Frame) null, "Load Game", true);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.getContentPane().add(panel);
 
-        if (choice == -1 || choice >= listModel.getSize()) {
-            JOptionPane.showMessageDialog(null, "Returning to menu...", "Load Game", JOptionPane.INFORMATION_MESSAGE);
-            return null;
-        } else {
-            File loadFile = loadFiles[choice];
-            saveLoad.loadFromFile(difficulty, player, inventory, map, folder + "/" + loadFile.getName());
-            return loadFile.getName();
-        }
+        // Add a Load Game button
+        JButton loadButton = new JButton("Load Game");
+        final String[] loadedFileName = {null};  // Variable to store the loaded file name
+
+        loadButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int selectedIndex = fileList.getSelectedIndex();
+
+                if (selectedIndex == -1 || selectedIndex >= listModel.getSize()) {
+                    JOptionPane.showMessageDialog(panel, "Please select a valid saved file.", "Load Game", JOptionPane.WARNING_MESSAGE);
+                } else {
+                    File loadFile = loadFiles[selectedIndex];
+                    int confirm = JOptionPane.showConfirmDialog(panel, "Are you sure you want to load this game?", "Load Game", JOptionPane.YES_NO_OPTION);
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        try {
+                            saveLoad.loadFromFile(difficulty, player, inventory, map, folder + "/" + loadFile.getName());
+                            JOptionPane.showMessageDialog(panel, "Game loaded successfully.", "Load Game", JOptionPane.INFORMATION_MESSAGE);
+                            dialog.dispose();
+                            loadedFileName[0] = loadFile.getName();  // Set the loaded file name
+                        } catch (IOException ex) {
+                            JOptionPane.showMessageDialog(panel, "Error loading the game.", "Load Game", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                }
+            }
+        });
+
+        panel.add(loadButton);
+
+        dialog.pack();
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+
+        return loadedFileName[0];
     }
     
     public void endTurn(Player player, Map map) {
