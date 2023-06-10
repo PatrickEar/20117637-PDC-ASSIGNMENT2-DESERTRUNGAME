@@ -24,14 +24,14 @@ public class Player {
         this.random = new Random();
     }
     
-    // compiles all functions for the end turn
+    // Compiles all functions for the end turn
     public void endTurn() {
         decreaseHunger(this.random.nextInt(1,5));
         decreaseThirst(this.random.nextInt(1,5));
         increaseCurrency(this.random.nextInt(2, 5));
     }
     
-    // adjusts hunger
+    // Adjusts hunger
     public void increaseHunger(int amount) {
         this.hunger += amount;
     }
@@ -39,18 +39,18 @@ public class Player {
     public void decreaseHunger(int amount) {
         this.hunger -= amount;
 
-        // if hunger is empty, decrease health by 2
+        // If hunger is empty, decrease health by 2
         if (this.hunger < 0) {
             this.hunger = 0;
             decreaseHealth(2);
         } 
-        // if hunger is low, decrease health by 1
+        // If hunger is low, decrease health by 1
         else if (this.hunger < 5) {
             decreaseHealth(1);
         }
     }
     
-    // adjust thirst
+    // Adjust thirst
     public void increaseThirst(int amount) {
         this.thirst += amount;
     }
@@ -58,12 +58,12 @@ public class Player {
     public void decreaseThirst(int amount) {
         this.thirst -= amount;
         
-        // if thirst is empty, decrease health by 2
+        // If thirst is empty, decrease health by 2
         if (this.thirst < 0) {
             this.thirst = 0;
             decreaseHealth(2);
         } 
-        // if thirst is low, decrease health by 1
+        // If thirst is low, decrease health by 1
         else if (this.thirst < 5) {
             decreaseHealth(1); 
         }
@@ -74,12 +74,12 @@ public class Player {
         return this.health <= 0;
     }
 
-    // adjust health
+    // Adjust health
     public void decreaseHealth(int amount) {
         this.health -= amount;
     }
 
-    //adjust currency and prompts
+    // Adjust currency and prompts
     public void increaseCurrency(int amount) {
         this.currency += amount;
     }
@@ -87,7 +87,7 @@ public class Player {
         this.currency -= amount;
     }
 
-    // getters and setters for all parameters
+    // Getters and setters for all parameters
     public int getHealth() {
         return this.health;
     }
